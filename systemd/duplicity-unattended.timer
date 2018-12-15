@@ -1,0 +1,10 @@
+[Unit]
+Description=Run daily Duplicity backup
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=20min
+
+[Install]
+WantedBy=timers.target

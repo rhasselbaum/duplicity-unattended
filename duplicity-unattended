@@ -1,0 +1,78 @@
+#!/usr/bin/env python3
+
+"""
+Simple wrapper script for unattended Duplicity backups to S3 using a GnuPG key for encryption.
+This script is intended to be called from cron or equivalent to backup a host to S3 and
+remove stale backups. All configuration is stored in a YAML file. Start with a copy of the
+provided "config.yaml" and customize it to your needs. The GnuPG key must be accessible
+without a passphrase to support unattended backups.
+"""
+
+import yaml
+from subprocess import run
+from itertools import chain
+import argparse
+
+
+def main():
+    """Entry point."""
+    # Read our YAML config. into a dict. See included sample "config.yaml" for structure.
+    args = parse_args()
+    with open(args.config, 'r') as f:
+        config = yaml.safe_load(f)
+
+    # Set up environment.
+    env = {'PASSPHRASE': ''}  # For unattended backups, there's no point to a passphrase. Just protect the key.
+    # Point boto to a config file if one was given. Otherwise, rely on its default credentials resolution behavior.
+    if 'aws_config_file' in config:
+        env.update({'BOTO_CONFIG': config['aws_config_file']})
+
+    # Base backup command used for each source directory.
+    backup_base_cmd = [
+        'duplicity',
+        '--full-if-older-than', config['full_if_older_than'],
+        '--encrypt-sign-key', config['gpg_key_id'],
+        '--s3-use-new-style',
+        '--s3-use-ia',
+        '--s3-use-multiprocessing',
+    ]
+    if args.dry_run:
+        backup_base_cmd.append('--dry-run')
+
+    # Backup each source directory.
+    for backup_dir in config['backup_dirs']:
+        backup_cmd = backup_base_cmd  \
+                     + list(chain.from_iterable([['--include', p] for p in backup_dir.get('includes', [])])) \
+                     + list(chain.from_iterable([['--exclude', p] for p in backup_dir.get('excludes', [])])) \
+                     + [backup_dir['source'], config['s3_url'] + backup_dir['source']]
+        run(backup_cmd, check=True, env=env)
+
+    # Purge old backups unless asked to skip.
+    if 'remove_all_but_n_full' in config and not args.skip_purge:
+        # Base purge command used for each backed up source directory.
+        purge_base_cmd = [
+            'duplicity', 'remove-all-but-n-full', str(config['remove_all_but_n_full']),
+        ]
+        if not args.dry_run:
+            purge_base_cmd.append('--force')
+
+        # Purge each backed up source directory.
+        for backup_dir in config['backup_dirs']:
+            purge_cmd = purge_base_cmd + [config['s3_url'] + backup_dir['source']]
+            run(purge_cmd, check=True, env=env)
+
+
+def parse_args():
+    """Parse command line options and return the parsed output."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--config', metavar='FILE', default='config.yaml',
+                        help='Config file to use. Default: config.yaml.')
+    parser.add_argument('--dry-run', action='store_true',
+                        help='Preview backup and purge actions without making changes.')
+    parser.add_argument('--skip-purge', action='store_true',
+                        help='Don\'t purge old backups.')
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    main()

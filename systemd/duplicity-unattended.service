@@ -1,0 +1,8 @@
+[Unit]
+Description=Unattended Duplicity backup
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/local/bin/duplicity-unattended

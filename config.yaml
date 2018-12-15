@@ -1,0 +1,44 @@
+########################################################################
+# Config options for Duplicity host backup.
+########################################################################
+
+# GnuPG key ID used for encryption and signing.
+gpg_key_id: 0302EC6D2613E4936532366CB48526BB511A0E34
+
+# S3 bucket name and optional prefix in Duplicity URL format.
+s3_url: s3+http://my-host-backup
+
+# Create full backup if the last one is older than the specified period. Use Duplicity time format.
+full_if_older_than: 1M
+
+# Purge old backups, retaining only the last 3 full ones
+remove_all_but_n_full: 3
+
+# Optional AWS config file with credentials.
+aws_config_file: /etc/duplicity-unattended/aws_credentials
+
+# Directories to be backed up. Each one consists of a source (absolute path) and optional lists of
+# include and exclude patterns in Duplicity format.
+backup_dirs:
+  - source: /home/rob
+    includes:
+      - /home/rob/Downloads/SpinRite.exe
+    excludes:
+      - /**/[Cc]ache
+      - /**/.cache
+      - /**/Trash
+      - /**/Steam
+      - /home/rob/VirtualBox VMs
+      - /home/rob/.config/VirtualBox
+      - /home/rob/.mozilla
+      - /home/rob/.config/chromium
+      - /home/rob/.config/google-chrome
+      - /home/rob/.local/share/flatpak
+      - /home/rob/.wine
+      - /home/rob/.virtualenvs
+      - /home/rob/.local/share/virtualenvs
+      - /home/rob/.nvm
+      - /home/rob/Documents/50th Anniversary
+      - /home/rob/Downloads
+  - source: /etc
+  - source: /var/lib/unifi
