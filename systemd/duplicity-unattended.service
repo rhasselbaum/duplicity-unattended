@@ -5,4 +5,4 @@ Description=Unattended Duplicity backup
 Type=oneshot
 User=root
 Group=root
-ExecStart=/usr/local/bin/duplicity-unattended
+ExecStart=/usr/local/bin/duplicity-unattended --config /etc/duplicity-unattended/config.yaml

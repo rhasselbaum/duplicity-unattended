@@ -7,6 +7,8 @@ This is my script for unattended host backups using Duplicity that others might 
 1. Time determines the interval between full backups.
 1. Purging old backups happens automatically at the end (unless overridden). The script keeps the last N full backups.
 
+Run `duplicity-unattended --help` to see all options or just look at the code.
+
 ## New host configuration
 
 Here are the steps I generally follow to set up backups on a new host. I use separate keys, buckets, and AWS credentials so the compromise of any host doesn't affect others.
