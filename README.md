@@ -15,7 +15,7 @@ Run `duplicity-unattended --help` to see all options or just look at the code.
 1. `systemd/`: Directory containing sample systemd unit files you can customize to run the script periodically.
 1. `cfn/host-bucket.yaml`: CloudFormation template to set up an S3 bucket and IAM permissions for a new host.
 
-You can, of course, use the script without systemd or CloudFormation. They all work independently.
+You can use the script without systemd or CloudFormation if you prefer. They all work independently.
 
 ## Configuring new hosts
 
@@ -29,7 +29,7 @@ First, create an S3 bucket and IAM user/group/policy with read-write access to i
 1. Select the option to upload a template to S3 and pick the `cfn/host-bucket.yaml` template.
 1. Fill in the stack name and bucket name. I suggest including the hostname in both for easy identification.
 1. Accept remaining defaults and acknowledge the IAM resource creation warning.
-1. Wait for stack setup to complete. If it fails, it's likely the S3 bucket name isn't unique. Delete the stack and try again.
+1. Wait for stack setup to complete. If it fails, it's likely the S3 bucket name isn't unique. Delete the stack and try again with a different name.
 1. Go to IAM in the AWS console and click on the new user. The user name is prefixed with the stack name so you can identify it that way.
 1. Go to the `Security credentials` tab and click `Create access key`.
 1. Copy the generated access key ID and secret key. You'll need them later.
