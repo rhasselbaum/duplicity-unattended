@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Creates an S3 bucket for backups and new IAM user, group, and policy that has
+  read/write access to it.
+Parameters:
+  BucketName:
+    Type: String
+    Description: Name of the S3 bucket
+    MinLength: '1'
+Resources:
+  Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Ref BucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+  Group:
+    Type: 'AWS::IAM::Group'
+  Policy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      Description: !Sub 'Duplicity policy for backup to ${BucketName} bucket'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: 's3:*'
+            Resource: 
+              - !Sub 'arn:aws:s3:::${BucketName}/*'
+              - !Sub 'arn:aws:s3:::${BucketName}'
+      Groups:
+        - !Ref Group
+  User:
+    Type: 'AWS::IAM::User'
+    Properties:
+      Groups:
+        - !Ref Group

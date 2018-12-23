@@ -45,6 +45,7 @@ def main():
                      + list(chain.from_iterable([['--include', p] for p in backup_dir.get('includes', [])])) \
                      + list(chain.from_iterable([['--exclude', p] for p in backup_dir.get('excludes', [])])) \
                      + [backup_dir['source'], config['s3_url'] + backup_dir['source']]
+        print('Starting backup: {}'.format([backup_dir['source']]), flush=True)
         run(backup_cmd, check=True, env=env)
 
     # Purge old backups unless asked to skip.
@@ -59,6 +60,7 @@ def main():
         # Purge each backed up source directory.
         for backup_dir in config['backup_dirs']:
             purge_cmd = purge_base_cmd + [config['s3_url'] + backup_dir['source']]
+            print('Starting purge: {}'.format([backup_dir['source']]), flush=True)
             run(purge_cmd, check=True, env=env)
 
 

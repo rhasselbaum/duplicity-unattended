@@ -9,28 +9,34 @@ This is my script for unattended host backups using Duplicity that others might 
 
 Run `duplicity-unattended --help` to see all options or just look at the code.
 
-## New host configuration
+## What's inside the box?
+
+1. `duplicity-unattended`: Script that runs unattended backups and purges stale backups.
+1. `systemd/`: Directory containing sample systemd unit files you can customize to run the script periodically.
+1. `cfn/host-bucket.yaml`: CloudFormation template to set up an S3 bucket and IAM permissions for a new host.
+
+You can, of course, use the script without systemd or CloudFormation. They all work independently.
+
+## Configuring new hosts
 
 Here are the steps I generally follow to set up backups on a new host. I use separate keys, buckets, and AWS credentials so the compromise of any host doesn't affect others.
 
-1. Install dependencies:
-   1. Duplicity
-   1. boto2 for Python 2
-   1. GnuPG
-   1. Python 3
-   1. PyYAML for Python 3
-1. Create new RSA 4096 keypair as the user who will perform the backups. If you're backing up system directories, this probably needs to be root. Do **NOT** set a passphrase. Leave it blank.
-    ```
-    gpg --full-generate-key --pinentry loopback
-    ```
-1. Make an off-host backup of the keypair in a secure location. I use my LastPass vault for this. Don't skip this step or you'll be very sad when you realize the keys perished alongside the rest of your data, rendering your backups useless.
-    ```
-    gpg --list-keys  # to get the key ID
-    gpg --armor --output pubkey.gpg --export <key_id>
-    gpg --armor --output privkey.gpg --export-secret-key <key_id>
-    ```
-1. Delete the exported key files from the filesystem once they're secure.
-1. Create S3 bucket for the host. Default settings are fine.
+### Set up an S3 bucket
+
+First, create an S3 bucket and IAM user/group/policy with read-write access to it. The included `cfn/host-bucket.yaml` CloudFormation template can do this for you automatically. To apply it:
+
+1. Go to CloudFormation in the AWS console and click `Create Stack`.
+1. Select the option to upload a template to S3 and pick the `cfn/host-bucket.yaml` template.
+1. Fill in the stack name and bucket name. I suggest including the hostname in both for easy identification.
+1. Accept remaining defaults and acknowledge the IAM resource creation warning.
+1. Wait for stack setup to complete. If it fails, it's likely the S3 bucket name isn't unique. Delete the stack and try again.
+1. Go to IAM in the AWS console and click on the new user. The user name is prefixed with the stack name so you can identify it that way.
+1. Go to the `Security credentials` tab and click `Create access key`.
+1. Copy the generated access key ID and secret key. You'll need them later.
+
+Alternatively, you can create the S3 bucket and IAM resources manually. Here are the general steps. Modify as you see fit.
+
+1. Create the S3 bucket. Default settings are fine.
 1. Create IAM policy with the following permissions:
     ```
     {
@@ -47,9 +53,29 @@ Here are the steps I generally follow to set up backups on a new host. I use sep
         ]
     }
     ```
-    Replace `<bucket>` with the bucket name. Call the policy `S3Backup<host>` where `<host>` is the hostname.
+    Replace `<bucket>` with the bucket name.
 1. Create IAM group with the same name as the policy and assign the policy to it.
-1. Create IAM user for programmatic access. Call it `s3-backup-<host>` where `<host>` is the hostname. Add the user to the group. Don't forget to copy the access key ID and secret access key before completing the wizard.
+1. Create IAM user for programmatic access. Add the user to the group. Don't forget to copy the access key ID and secret access key at the end of the wizard.
+
+### Set up the host
+
+1. Install dependencies:
+   * Duplicity
+   * boto2 for Python 2
+   * GnuPG
+   * Python 3
+   * PyYAML for Python 3
+1. Create new RSA 4096 keypair as the user who will perform the backups. If you're backing up system directories, this probably needs to be root. Do **NOT** set a passphrase. Leave it blank.
+    ```
+    gpg --full-generate-key --pinentry loopback
+    ```
+1. Make an off-host backup of the keypair in a secure location. I use my LastPass vault for this. Don't skip this step or you'll be very sad when you realize the keys perished alongside the rest of your data, rendering your backups useless.
+    ```
+    gpg --list-keys  # to get the key ID
+    gpg --armor --output pubkey.gpg --export <key_id>
+    gpg --armor --output privkey.gpg --export-secret-key <key_id>
+    ```
+1. Delete the exported key files from the filesystem once they're secure.
 1. Create a file on the host containing the AWS credentials.
     ```
     [Credentials]
@@ -62,13 +88,13 @@ Here are the steps I generally follow to set up backups on a new host. I use sep
     chmod 600 aws_credentials
     ```
     Change ownership if needed.
-1. Copy the sample `config.yaml` file to the same directory as the AWS credentials file. (Or you can put it somewhere else. Doesn't matter.)
-1. Customize the `config.yaml` file for the host.
 1. Copy the `duplicity-unattended` script to a `bin` directory and make sure it's runnable.
     ```
     chmod +x duplicity-unattended
     ```
-    I usually clone the repo and add a symlink.
+    I usually clone the repo to `/usr/local/share` and add a symlink in `usr/local/bin`.
+1. Copy the sample `config.yaml` file to the same directory as the AWS credentials file. (Or you can put it somewhere else. Doesn't matter.)
+1. Customize the `config.yaml` file for the host.
 1. Do a dry-run backup as the backup user to validate most of the configuration:
     ```
     duplicity-unattended --config <config_file> --dry-run
@@ -89,3 +115,18 @@ On Arch Linux and similar distros, drop these files into `/etc/systemd/system` a
 sudo systemctl enable duplicity-unattended.timer
 sudo systemctl start duplicity-unattended.timer
 ```
+
+Make sure the timer is running:
+
+```
+sudo systemctl status duplicity-unattended.timer
+```
+
+And then run the backup once manually and check the output:
+
+```
+sudo systemctl start duplicity-unattended.service
+sudo journalctl -u duplicity-unattended.service
+```
+
+You're done! Enjoy your backups.
