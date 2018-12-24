@@ -37,26 +37,25 @@
     "develop": {
         "arrow": {
             "hashes": [
-                "sha256:a558d3b7b6ce7ffc74206a86c147052de23d3d4ef0e17c210dd478c53575c4cd",
-                "sha256:bc7376e697b0d4d4a184fa350b0e7f0e022cf268318dc5a1c8ff8806f2957589"
+                "sha256:a558d3b7b6ce7ffc74206a86c147052de23d3d4ef0e17c210dd478c53575c4cd"
             ],
             "version": "==0.12.1"
         },
         "aws-lambda-builders": {
             "hashes": [
-                "sha256:f553572572e2aaa287c1a65af15a57f6c104271aaca6265ef4fe7f1d429aee4b",
-                "sha256:ffe6ed9a64c429926b1733023a3ec44798eafde79d9a42aad115b856d8e99fbe"
+                "sha256:4380dd8430f443b46867ff2b03c9673ed6042a3ffc6f05c18764d062d04c4049",
+                "sha256:fed94fd909e19fe7b8a22c05a40228eeb6072cbbd675d07416cd5746a8df0746"
             ],
-            "version": "==0.0.4"
+            "version": "==0.0.5"
         },
         "aws-sam-cli": {
             "hashes": [
-                "sha256:0e0a27b3cf6d38e34519e0651d3f08332de6752b1ead2f224c3605b40f184768",
-                "sha256:90ab000da42c3241851849c80d4228b9bde715e94c6420d162b3d735aac924a5",
-                "sha256:b7dc86871610f20438777e43189a613116569c302fe4bfa054e94d8da3b948fd"
+                "sha256:1aa6ca976fb697dd44b4f0c293c9275587e9d160e873bc035a3ffccd14b1b16e",
+                "sha256:523cd125bd89cd1d42559101a8500f74f88067fd9b26f72b1d05c5d00a76bed9",
+                "sha256:e10399639096d9617dd566f5e0326fe140b117a0b8d6611d5d4404b469ef9c46"
             ],
             "index": "pypi",
-            "version": "==0.9.0"
+            "version": "==0.10.0"
         },
         "aws-sam-translator": {
             "hashes": [
@@ -73,17 +72,17 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:0aef5adf904638bf9bc053efaf182d8dc8647d72d9d7974173b77eab29f67254",
-                "sha256:90911996038f88f90eef8d55689c4c4843daec94a48b56aba4b3399306dd4f2a"
+                "sha256:90c5634fcd9c658f8d1554885f33d8c472a9adcde5f29d92ef91dcd12bf2e646",
+                "sha256:f45a88dc66e935f03dcc7f41b7702fddfdd9d8ab1f29a9668687c3abba544e0e"
             ],
-            "version": "==1.9.66"
+            "version": "==1.9.71"
         },
         "botocore": {
             "hashes": [
-                "sha256:25c39ecc71356287cf79d66981ec77deca374e28043b19b2f818d48aa34272a1",
-                "sha256:419e1a6a1829c49c7aad30efc1e4a9435ad36573ca6a14d94940e7f302aa234a"
+                "sha256:d6fa29f28899892f77014c19afa40ec1b87ef1e57b15c7eac582e8d48eddf32d",
+                "sha256:e5bcea66a1ffad9b2e1ff2935a31455c76f689e00b924e9920cb012b177fbe35"
             ],
-            "version": "==1.12.66"
+            "version": "==1.12.71"
         },
         "certifi": {
             "hashes": [
@@ -303,6 +302,13 @@
                 "sha256:c7a9ec356982d5e9ab2d4b46391a7d6a950e2b04c472419f5fdec70cc0ada72f"
             ],
             "version": "==0.1.13"
+        },
+        "serverlessrepo": {
+            "hashes": [
+                "sha256:8d6d5f3431d98fe114e2ea5dbbb2f77e5bc8c9cc3401843eeac7734778aced62",
+                "sha256:e32a6f55f55a36ae17cf80e45f75ca8f7b23498cbcdc60599efce9955c9ab879"
+            ],
+            "version": "==0.1.5"
         },
         "six": {
             "hashes": [

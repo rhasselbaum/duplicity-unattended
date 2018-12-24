@@ -4,6 +4,18 @@ Description: >-
   Checks for Duplicity backups in a bucket. Sends an email if no recent backups
   are found for any path (prefix) containing at least one backup set. Before using,
   make sure the sender and recipient addresses/domains are verified in AWS SES.
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: duplicity-unattended-monitor
+    Description: "Checks for Duplicity backups in a bucket and sends email if they are growing stale."
+    Author: Rob Hasselbaum
+    SpdxLicenseId: MIT
+    LicenseUrl: LICENSE
+    ReadmeUrl: README.md
+    Labels: ['backup']
+    HomepageUrl: https://github.com/rhasselbaum/duplicity-unattended
+    SemanticVersion: 1.0.1
+    SourceCodeUrl: https://github.com/rhasselbaum/duplicity-unattended
 Parameters:
   BucketName:
     Type: String
