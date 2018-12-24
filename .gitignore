@@ -1,3 +1,7 @@
 .idea/
 .aws_credentials
 __pycache__
+build
+.aws-sam
+packaged.yaml
+test-env.json

@@ -14,6 +14,7 @@ Run `duplicity-unattended --help` to see all options or just look at the code.
 1. `duplicity-unattended`: Script that runs unattended backups and purges stale backups.
 1. `systemd/`: Directory containing sample systemd unit files you can customize to run the script periodically.
 1. `cfn/host-bucket.yaml`: CloudFormation template to set up an S3 bucket and IAM permissions for a new host.
+1. `cfn/backup-monitor`: CloudFormation (SAM) template and Lambda function to notify you if backups stop working.
 
 You can use the script without systemd or CloudFormation if you prefer. They all work independently.
 
@@ -129,4 +130,11 @@ sudo systemctl start duplicity-unattended.service
 sudo journalctl -u duplicity-unattended.service
 ```
 
-You're done! Enjoy your backups.
+You're done!
+
+## Set up monitoring
+
+Everything's working fine now, but how do you know it will continue to work in the future? You can set up systemd to email you if something goes wrong, but I prefer an independent mechanism. The `cfn/backup-monitor` directory contains a CloudFormation template (SAM template, actually) and a Lambda function that monitors a bucket for new backups and notifies you if backups are growing too stale. To set it up for a new host/bucket, follow these steps:
+
+1. If you have not used AWS Simple Email Service (SES) before, follow the instructions to [verify the sender and recipient email addresses](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-addresses-and-domains.html). See the [overview](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-addresses-and-domains.html) documentation for background.
+1. More details coming. Watch this space.
