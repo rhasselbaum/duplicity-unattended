@@ -136,7 +136,7 @@ You're done! Enjoy your backups.
 
 How do make sure backups keep working  in the future? You can set up systemd to email you if something goes wrong, but I prefer an independent mechanism. The `cfn/backup-monitor` directory contains a CloudFormation template (SAM template, actually) with a Lambda function that monitors a bucket for new backups and emails you if no recent backups have occurred. To set it up for a new host/bucket, follow these steps:
 
-1. If you have not used AWS Simple Email Service (SES) before, follow the instructions to [verify the sender and recipient email addresses](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-addresses-and-domains.html). See the [overview](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-addresses-and-domains.html) documentation for more information.
+1. If you have not used AWS Simple Email Service (SES) before, follow the instructions to [verify the sender and recipient email addresses](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-email-addresses-procedure.html). See the [overview](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-addresses-and-domains.html) documentation for more information.
 1. Go to [duplicity-unattended-monitor](https://serverlessrepo.aws.amazon.com/applications/arn:aws:serverlessrepo:us-east-1:829216590006:applications~duplicity-unattended-monitor) in the AWS Serverless Application Repository and click the `Deploy` button.
 1. Review the template. (You wouldn't deploy a CloudFormation template into your AWS account without knowing what it does first, would you?)
 1. Change the application/stack name. I suggest a name that includes the host or bucket for easy identification.
@@ -156,16 +156,16 @@ Now let's test it.
 
 If all goes well, you will get an email with a summary of the most recent backups found in the bucket.
 
-From now on, the function will run once a day and email you only when there have been no recent backups for the number of days you specified. The function will look for recent backups in any S3 "folder" that contains at least one backup set from any time in the past.
+From now on, the function will run once a day and email you only when there have been no recent backups for the number of days you specified. The function will look for recent backups in any S3 "folder" that contains at least one backup set from any time in the past. You can deploy additional stacks for each bucket you want to monitor.
 
 If you prefer to deploy the CloudFormation template directly from source code instead of from the Serverless Application Repository, you can. The steps are roughly as follows:
 
 1. Install [Pipenv](https://pipenv.readthedocs.io/en/latest/) for Python 3 if you don't already have it.
-1. Change to the `cfn/backup-monitor` directory.
-1. Install the [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/index.html#lang/en_us) into a virtual environment:
+1. From the source repo directory, install the [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/index.html#lang/en_us) into a virtual environment:
    ```
    pipenv install --dev
    ```
+1. Change to the `cfn/backup-monitor` directory.
 1. Set up your AWS CLI credentials so SAM can read them (e.g. using `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables).
 1. Run the SAM command to package the CloudFormation template and upload the Lambda function to S3:
    ```
