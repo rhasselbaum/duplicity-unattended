@@ -14,7 +14,7 @@ Metadata:
     ReadmeUrl: README.md
     Labels: ['backup']
     HomepageUrl: https://github.com/rhasselbaum/duplicity-unattended
-    SemanticVersion: 1.0.1
+    SemanticVersion: 1.0.2
     SourceCodeUrl: https://github.com/rhasselbaum/duplicity-unattended
 Parameters:
   BucketName:
@@ -32,6 +32,7 @@ Parameters:
   MaxAgeDays:
     Type: Number
     Description: 'Maximum age in days of a backup set before it is considered stale'
+    Default: 7
     MinValue: 1
 Globals:
     Function:

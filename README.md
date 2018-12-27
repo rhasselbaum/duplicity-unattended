@@ -130,11 +130,46 @@ sudo systemctl start duplicity-unattended.service
 sudo journalctl -u duplicity-unattended.service
 ```
 
-You're done!
+You're done! Enjoy your backups.
 
 ## Set up monitoring
 
-Everything's working fine now, but how do you know it will continue to work in the future? You can set up systemd to email you if something goes wrong, but I prefer an independent mechanism. The `cfn/backup-monitor` directory contains a CloudFormation template (SAM template, actually) and a Lambda function that monitors a bucket for new backups and notifies you if backups are growing too stale. To set it up for a new host/bucket, follow these steps:
+How do make sure backups keep working  in the future? You can set up systemd to email you if something goes wrong, but I prefer an independent mechanism. The `cfn/backup-monitor` directory contains a CloudFormation template (SAM template, actually) with a Lambda function that monitors a bucket for new backups and emails you if no recent backups have occurred. To set it up for a new host/bucket, follow these steps:
 
-1. If you have not used AWS Simple Email Service (SES) before, follow the instructions to [verify the sender and recipient email addresses](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-addresses-and-domains.html). See the [overview](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-addresses-and-domains.html) documentation for background.
-1. More details coming. Watch this space.
+1. If you have not used AWS Simple Email Service (SES) before, follow the instructions to [verify the sender and recipient email addresses](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-addresses-and-domains.html). See the [overview](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-addresses-and-domains.html) documentation for more information.
+1. Go to [duplicity-unattended-monitor](https://serverlessrepo.aws.amazon.com/applications/arn:aws:serverlessrepo:us-east-1:829216590006:applications~duplicity-unattended-monitor) in the AWS Serverless Application Repository and click the `Deploy` button.
+1. Review the template. (You wouldn't deploy a CloudFormation template into your AWS account without knowing what it does first, would you?)
+1. Change the application/stack name. I suggest a name that includes the host or bucket for easy identification.
+1. Fill in the remaining function parameters. Make sure the  email addresses exactly match the ones you verified in SES.
+1. Click `Deploy` and wait for AWS to finish creating all the resources.
+
+Now let's test it.
+
+1. Click on the function link under `Resources`. This will take you to the Lambda console for the function.
+1. Click the `Test` button in the upper-right.
+1. Create a new test event with the following content:
+   ```
+   {"testEmail": true}
+   ```
+   Give it a name like `BackupMonitorTest` and click `Create`.
+1. Now you should see the new named event next to the `Test` button. Click the `Test` button again.
+
+If all goes well, you will get an email with a summary of the most recent backups found in the bucket.
+
+From now on, the function will run once a day and email you only when there have been no recent backups for the number of days you specified. The function will look for recent backups in any S3 "folder" that contains at least one backup set from any time in the past.
+
+If you prefer to deploy the CloudFormation template directly from source code instead of from the Serverless Application Repository, you can. The steps are roughly as follows:
+
+1. Install [Pipenv](https://pipenv.readthedocs.io/en/latest/) for Python 3 if you don't already have it.
+1. Change to the `cfn/backup-monitor` directory.
+1. Install the [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/index.html#lang/en_us) into a virtual environment:
+   ```
+   pipenv install --dev
+   ```
+1. Set up your AWS CLI credentials so SAM can read them (e.g. using `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables).
+1. Run the SAM command to package the CloudFormation template and upload the Lambda function to S3:
+   ```
+   pipenv run sam package --s3-bucket <code_bucket> --output-template-file packaged.yaml
+   ```
+   where `<code_bucket>` is an S3 bucket to which the AWS CLI user has write access.
+1. You can now use the CloudFormation AWS console or the AWS CLI to deploy the `packaged.yaml` stack template that SAM just created. 
