@@ -11,7 +11,7 @@ s3_url: s3+http://my-host-backup
 # Create full backup if the last one is older than the specified period. Use Duplicity time format.
 full_if_older_than: 1M
 
-# Purge old backups, retaining only the last 3 full ones
+# Purge old backups, retaining only the last 3 full ones.
 remove_all_but_n_full: 3
 
 # Optional AWS config file with credentials.

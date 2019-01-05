@@ -9,29 +9,49 @@ without a passphrase to support unattended backups.
 """
 
 import yaml
+import yaml.parser
 from subprocess import run
 from itertools import chain
 import argparse
+import sys
+
+# Config file keys
+REMOVE_ALL_BUT_N_FULL_KEY = 'remove_all_but_n_full'
+S3_URL_KEY = 's3_url'
+BACKUP_DIRS_KEY = 'backup_dirs'
+GPG_KEY_ID_KEY = 'gpg_key_id'
+AWS_CONFIG_FILE_KEY = 'aws_config_file'
+FULL_IF_OLDER_THAN_KEY = 'full_if_older_than'
+
+# Backup directory config keys
+SOURCE_KEY = 'source'
+INCLUDES_KEY = 'includes'
+EXCLUDES_KEY = 'excludes'
 
 
 def main():
     """Entry point."""
     # Read our YAML config. into a dict. See included sample "config.yaml" for structure.
-    args = parse_args()
-    with open(args.config, 'r') as f:
-        config = yaml.safe_load(f)
+    args = _parse_args()
+    try:
+        with open(args.config, 'r') as f:
+            config = _validate_config(yaml.safe_load(f))
+    except OSError as e:
+        sys.exit(f"Cannot read config file {repr(args.config)}: {e}")
+    except yaml.parser.ParserError as e:
+        sys.exit(f"Cannot parse {repr(args.config)} as YAML: {e}")
 
     # Set up environment.
     env = {'PASSPHRASE': ''}  # For unattended backups, there's no point to a passphrase. Just protect the key.
     # Point boto to a config file if one was given. Otherwise, rely on its default credentials resolution behavior.
-    if 'aws_config_file' in config:
-        env.update({'BOTO_CONFIG': config['aws_config_file']})
+    if AWS_CONFIG_FILE_KEY in config:
+        env.update({'BOTO_CONFIG': config[AWS_CONFIG_FILE_KEY]})
 
     # Base backup command used for each source directory.
     backup_base_cmd = [
         'duplicity',
-        '--full-if-older-than', config['full_if_older_than'],
-        '--encrypt-sign-key', config['gpg_key_id'],
+        '--full-if-older-than', config[FULL_IF_OLDER_THAN_KEY],
+        '--encrypt-sign-key', config[GPG_KEY_ID_KEY],
         '--s3-use-new-style',
         '--s3-use-ia',
         '--s3-use-multiprocessing',
@@ -40,31 +60,67 @@ def main():
         backup_base_cmd.append('--dry-run')
 
     # Backup each source directory.
-    for backup_dir in config['backup_dirs']:
+    for backup_dir in config[BACKUP_DIRS_KEY]:
         backup_cmd = backup_base_cmd  \
-                     + list(chain.from_iterable([['--include', p] for p in backup_dir.get('includes', [])])) \
-                     + list(chain.from_iterable([['--exclude', p] for p in backup_dir.get('excludes', [])])) \
-                     + [backup_dir['source'], config['s3_url'] + backup_dir['source']]
-        print('Starting backup: {}'.format([backup_dir['source']]), flush=True)
+                     + list(chain.from_iterable([['--include', p] for p in backup_dir.get(INCLUDES_KEY, [])])) \
+                     + list(chain.from_iterable([['--exclude', p] for p in backup_dir.get(EXCLUDES_KEY, [])])) \
+                     + [backup_dir[SOURCE_KEY], config[S3_URL_KEY] + backup_dir[SOURCE_KEY]]
+        print('Starting backup: {}'.format([backup_dir[SOURCE_KEY]]), flush=True)
         run(backup_cmd, check=True, env=env)
 
     # Purge old backups unless asked to skip.
-    if 'remove_all_but_n_full' in config and not args.skip_purge:
+    if REMOVE_ALL_BUT_N_FULL_KEY in config and not args.skip_purge:
         # Base purge command used for each backed up source directory.
         purge_base_cmd = [
-            'duplicity', 'remove-all-but-n-full', str(config['remove_all_but_n_full']),
+            'duplicity', 'remove-all-but-n-full', str(config[REMOVE_ALL_BUT_N_FULL_KEY]),
         ]
         if not args.dry_run:
             purge_base_cmd.append('--force')
 
         # Purge each backed up source directory.
-        for backup_dir in config['backup_dirs']:
-            purge_cmd = purge_base_cmd + [config['s3_url'] + backup_dir['source']]
-            print('Starting purge: {}'.format([backup_dir['source']]), flush=True)
+        for backup_dir in config[BACKUP_DIRS_KEY]:
+            purge_cmd = purge_base_cmd + [config[S3_URL_KEY] + backup_dir[SOURCE_KEY]]
+            print('Starting purge: {}'.format([backup_dir[SOURCE_KEY]]), flush=True)
             run(purge_cmd, check=True, env=env)
 
 
-def parse_args():
+def _validate_config(config):
+    """Perform sanity check on the parsed configuration.
+
+    :param config: The config dict.
+    :return: The validated config dict for chaining.
+    """
+    try:
+        def fail_if_missing(key):
+            if not config.get(key):
+                raise ValueError(f'{repr(key)} is required in config')
+
+        # Make sure global config has all required values.
+        fail_if_missing(GPG_KEY_ID_KEY)
+        fail_if_missing(FULL_IF_OLDER_THAN_KEY)
+        fail_if_missing(S3_URL_KEY)
+        fail_if_missing(BACKUP_DIRS_KEY)
+        if not isinstance(config[BACKUP_DIRS_KEY], list):
+            raise ValueError(f'{repr(BACKUP_DIRS_KEY)} must contain a list of source directories')
+
+        # Make sure backup directories contain required values.
+        for backup_dir in config[BACKUP_DIRS_KEY]:
+            if not backup_dir.get(SOURCE_KEY):
+                raise ValueError(f'{repr(SOURCE_KEY)} is required for every backup directory')
+
+            def check_path_list(key):
+                if backup_dir.get(key):
+                    if not isinstance(backup_dir[key], list):
+                        raise ValueError(f'{repr(key)} must contain a list of paths')
+            check_path_list(INCLUDES_KEY)
+            check_path_list(EXCLUDES_KEY)
+
+        return config
+    except ValueError as e:
+        sys.exit(e)
+
+
+def _parse_args():
     """Parse command line options and return the parsed output."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', metavar='FILE', default='config.yaml',
