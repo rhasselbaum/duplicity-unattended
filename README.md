@@ -1,4 +1,4 @@
-# duplicity-unattended
+Duplicity# duplicity-unattended
 
 This is my script for unattended host backups using Duplicity that others might find useful. It is configurable through a YAML file, but opinionated in some ways:
 
@@ -172,4 +172,30 @@ If you prefer to deploy the CloudFormation template directly from source code in
    pipenv run sam package --s3-bucket <code_bucket> --output-template-file packaged.yaml
    ```
    where `<code_bucket>` is an S3 bucket to which the AWS CLI user has write access.
-1. You can now use the CloudFormation AWS console or the AWS CLI to deploy the `packaged.yaml` stack template that SAM just created. 
+1. You can now use the CloudFormation AWS console or the AWS CLI to deploy the `packaged.yaml` stack template that SAM just created.
+
+## Restoring from backup
+
+Invoke `duplicity` directly to restore from a backup. The general procedure is as follows:
+
+1. If restoring on a new host, import the GPG keypair from its secure backup location:
+   ```
+   gpg --import privkey.gpg
+   ```
+1. List the keys to get the key ID:
+   ```
+   gpg --list-keys
+   ```
+   Make a note of the ID (long hexadecimal number). You'll need it when you run the `duplicity` command later.
+1. If you don't have a copy of the original AWS credentials file (e.g. it perished along with your data), create a new one. You can create a new access key from the IAM console following the same procedure as described above for setting up a new host. Don't forget to deactivate the old access key in the IAM console if you no longer need it.
+1. Point Duplicity to the AWS credentials file by setting the `BOTO_CONFIG` environment variable. In `bash`, you'd run:
+   ```
+   export BOTO_CONFIG=<aws_credentials_file>
+   ```
+   Replace `<aws_credentials_file>` with the path to the file
+1. Run `duplicity` from the command line to restore each source directory. You can browse the source directories by looking inside the S3 bucket in the AWS console. Here's a basic working restore command that restores a source directory to a new target directory called `restored`:
+   ```
+   mkdir restored
+   duplicity --encrypt-sign-key <key_id> s3+http://<bucket>/<source_dir> restored
+   ```
+   Replace `<key_id>` with the GPG key ID, `<bucket>` with the S3 bucket name, and `<source_dir>` with the source directory name (S3 key prefix).
