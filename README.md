@@ -1,4 +1,4 @@
-Duplicity# duplicity-unattended
+# duplicity-unattended
 
 This is my script for unattended host backups using Duplicity that others might find useful. It is configurable through a YAML file, but opinionated in some ways:
 
