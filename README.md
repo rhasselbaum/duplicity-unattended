@@ -198,4 +198,4 @@ Invoke `duplicity` directly to restore from a backup. The general procedure is a
    mkdir restored
    duplicity --encrypt-sign-key <key_id> s3+http://<bucket>/<source_dir> restored
    ```
-   Replace `<key_id>` with the GPG key ID, `<bucket>` with the S3 bucket name, and `<source_dir>` with the source directory name (S3 key prefix).
+   Replace `<key_id>` with the GPG key ID, `<bucket>` with the S3 bucket name, and `<source_dir>` with the source directory name (S3 key prefix). You might be asked to provide a passphrase during the restore. Just hit ENTER.
