@@ -5,3 +5,8 @@ build
 .aws-sam
 packaged.yaml
 test-env.json
+*.backup
+*.tfstate
+terraform/.terraform.lock.hcl
+terraform/projects/*
+terraform/.terraform/*
