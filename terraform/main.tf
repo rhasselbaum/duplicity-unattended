@@ -16,7 +16,7 @@ resource "google_storage_bucket" "backups-bucket" {
   location                    = var.bucket_location
   force_destroy               = true
   uniform_bucket_level_access = true
-  # storage_class = "NEARLINE"
+  storage_class = var.storage_class
 }
 
 data "google_iam_policy" "duplicity" {

@@ -24,3 +24,9 @@ variable "bucket_location" {
   description = "A valid location for your GCS bucket"
   default     = "us-central1"
 }
+
+variable "storage_class" {
+  type        = string
+  description = "The GCS storage class to use for backups."
+  default     = "STANDARD"
+}
