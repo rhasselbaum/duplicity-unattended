@@ -22,6 +22,8 @@ You can use the script without systemd or CloudFormation if you prefer. They all
 
 Here are the steps I generally follow to set up backups on a new host. I use separate keys, buckets, and AWS credentials so the compromise of any host doesn't affect others.
 
+The following instructions assume you are using AWS. If you are using GCP, please skip ahead to "Set up the host."
+
 ### Set up an S3 bucket
 
 First, create an S3 bucket and IAM user/group/policy with read-write access to it. The included `cfn/host-bucket.yaml` CloudFormation template can do this for you automatically. To apply it:
@@ -60,6 +62,10 @@ Alternatively, you can create the S3 bucket and IAM resources manually. Here are
 
 ### Set up the host
 
+If you are using GCP, please follow the [GCP Setup](./docs/GCP_SETUP.md) instructions before you continue.
+
+#### Basic Setup
+
 1. Install dependencies:
    * Duplicity
    * boto2 for Python 2
@@ -77,6 +83,11 @@ Alternatively, you can create the S3 bucket and IAM resources manually. Here are
     gpg --armor --output privkey.gpg --export-secret-key <key_id>
     ```
 1. Delete the exported key files from the filesystem once they're secure.
+
+#### Configure AWS Credentials
+
+(Ignore the following if using GCP.)
+
 1. Create a file on the host containing the AWS credentials.
     ```
     [Credentials]
@@ -89,6 +100,9 @@ Alternatively, you can create the S3 bucket and IAM resources manually. Here are
     chmod 600 aws_credentials
     ```
     Change ownership if needed.
+
+#### Add To Path And Test
+
 1. Copy the `duplicity-unattended` script to a `bin` directory and make sure it's runnable.
     ```
     chmod +x duplicity-unattended
