@@ -1,5 +1,5 @@
 provider "google" {
-  project = "home-server-347301"
+  project = var.project_id
 }
 
 resource "google_service_account" "my_service_account" {
