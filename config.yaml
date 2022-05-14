@@ -18,7 +18,7 @@ full_if_older_than: 1M
 remove_all_but_n_full: 3
 
 # Optional AWS config file with credentials.
-# Ignore if using GCP
+# Ignore if using GCP.
 aws_config_file: /etc/duplicity-unattended/aws_credentials
 
 # Directories to be backed up. Each one consists of a source (absolute path) and optional lists of
