@@ -18,7 +18,7 @@ Run `duplicity-unattended --help` to see all options or just look at the code.
 
 You can use the script without systemd or CloudFormation if you prefer. They all work independently.
 
-## Configuring new hosts
+## Configuring New Hosts
 
 Here are the steps I generally follow to set up backups on a new host.
 
@@ -26,7 +26,7 @@ Here are the steps I generally follow to set up backups on a new host.
 
 I use separate keys, buckets, and AWS credentials so the compromise of any host doesn't affect others.
 
-#### Set up an S3 bucket
+#### Set Up An S3 Bucket
 
 First, create an S3 bucket and IAM user/group/policy with read-write access to it. The included `cfn/host-bucket.yaml` CloudFormation template can do this for you automatically. To apply it:
 
@@ -100,7 +100,7 @@ terraform apply
 This will output a message from terraform about success/failure, and the path to your service account credentials file. You'll need this path to finish your host setup later on.
 
 
-### Set up the host
+### Set Up The Host
 
 #### Basic Setup
 
@@ -158,7 +158,7 @@ plugin_directory = /home/{YOUR_USERNAME}/.config/boto/plugins
     duplicity-unattended --config <config_file>
     ```
 
-## Schedule backups
+## Schedule Backups
 
 How you schedule backups depends on your OS. I use systemd timers for this. See the `systemd` directory in this repository for sample unit files you can customize. You'll probably need to change `User`, `Group`, and `ExecStart` to match the user who performs the backups and the location of the `duplicity-unattended` script, respectively.
 
@@ -184,7 +184,7 @@ sudo journalctl -u duplicity-unattended.service
 
 You're done! Enjoy your backups.
 
-## Set up monitoring (AWS only)
+## Set Up Monitoring (AWS Only)
 
 How do make sure backups keep working  in the future? You can set up systemd to email you if something goes wrong, but I prefer an independent mechanism. The `cfn/backup-monitor` directory contains a CloudFormation template (SAM template, actually) with a Lambda function that monitors a bucket for new backups and emails you if no recent backups have occurred. To set it up for a new host/bucket, follow these steps:
 
@@ -226,7 +226,7 @@ If you prefer to deploy the CloudFormation template directly from source code in
    where `<code_bucket>` is an S3 bucket to which the AWS CLI user has write access.
 1. You can now use the CloudFormation AWS console or the AWS CLI to deploy the `packaged.yaml` stack template that SAM just created.
 
-## Restoring from backup
+## Restoring From Backup
 
 Invoke `duplicity` directly to restore from a backup. The general procedure is as follows:
 
