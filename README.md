@@ -20,11 +20,13 @@ You can use the script without systemd or CloudFormation if you prefer. They all
 
 ## Configuring new hosts
 
-Here are the steps I generally follow to set up backups on a new host. I use separate keys, buckets, and AWS credentials so the compromise of any host doesn't affect others.
+Here are the steps I generally follow to set up backups on a new host.
 
-The following instructions assume you are using AWS. If you are using GCP, please skip ahead to "Set up the host."
+### AWS Setup
 
-### Set up an S3 bucket
+I use separate keys, buckets, and AWS credentials so the compromise of any host doesn't affect others.
+
+#### Set up an S3 bucket
 
 First, create an S3 bucket and IAM user/group/policy with read-write access to it. The included `cfn/host-bucket.yaml` CloudFormation template can do this for you automatically. To apply it:
 
@@ -60,6 +62,21 @@ Alternatively, you can create the S3 bucket and IAM resources manually. Here are
 1. Create IAM group with the same name as the policy and assign the policy to it.
 1. Create IAM user for programmatic access. Add the user to the group. Don't forget to copy the access key ID and secret access key at the end of the wizard.
 
+#### Configure AWS Credentials On The Host
+
+1. Create a file on the host containing the AWS credentials.
+    ```
+    [Credentials]
+    aws_access_key_id = <access_key_id>
+    aws_secret_access_key = <secret_key>
+    ```
+    Replace `<access_key_id>` and `<secret_key>` with the IAM user credentials. Put it in a location appropriate for the backup user such as `/etc/duplicity-unattended/aws_credentials` or `~/.duplicity-unattended/aws_credentials`.
+1. Make sure only the backup user can access the credentials file.
+    ```
+    chmod 600 aws_credentials
+    ```
+    Change ownership if needed.
+
 ### Set up the host
 
 If you are using GCP, please follow the [GCP Setup](./docs/GCP_SETUP.md) instructions before you continue.
@@ -84,22 +101,6 @@ If you are using GCP, please follow the [GCP Setup](./docs/GCP_SETUP.md) instruc
     ```
 1. Delete the exported key files from the filesystem once they're secure.
 
-#### Configure AWS Credentials
-
-(Ignore the following if using GCP.)
-
-1. Create a file on the host containing the AWS credentials.
-    ```
-    [Credentials]
-    aws_access_key_id = <access_key_id>
-    aws_secret_access_key = <secret_key>
-    ```
-    Replace `<access_key_id>` and `<secret_key>` with the IAM user credentials. Put it in a location appropriate for the backup user such as `/etc/duplicity-unattended/aws_credentials` or `~/.duplicity-unattended/aws_credentials`.
-1. Make sure only the backup user can access the credentials file.
-    ```
-    chmod 600 aws_credentials
-    ```
-    Change ownership if needed.
 
 #### Add To Path And Test
 
@@ -146,7 +147,7 @@ sudo journalctl -u duplicity-unattended.service
 
 You're done! Enjoy your backups.
 
-## Set up monitoring
+## Set up monitoring (AWS only)
 
 How do make sure backups keep working  in the future? You can set up systemd to email you if something goes wrong, but I prefer an independent mechanism. The `cfn/backup-monitor` directory contains a CloudFormation template (SAM template, actually) with a Lambda function that monitors a bucket for new backups and emails you if no recent backups have occurred. To set it up for a new host/bucket, follow these steps:
 
