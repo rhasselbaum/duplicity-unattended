@@ -15,7 +15,7 @@ Run `duplicity-unattended --help` to see all options or just look at the code.
 1. `systemd/`: Directory containing sample systemd unit files you can customize to run the script periodically.
 1. `cfn/host-bucket.yaml`: CloudFormation template to set up an S3 bucket and IAM permissions for a new host.
 1. `cfn/backup-monitor`: CloudFormation (SAM) template and Lambda function to notify you if backups stop working.
-1. `terraform/gcp`: Terraform template to set up remote backups in Google Cloud Storage. (Sets up GCS folder and Service Account.)
+1. `terraform-gcp`: Terraform template to set up remote backups in Google Cloud Storage. (Sets up GCS folder and Service Account.)
 
 You can use the script without systemd or CloudFormation if you prefer. They all work independently.
 
