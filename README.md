@@ -15,14 +15,19 @@ Run `duplicity-unattended --help` to see all options or just look at the code.
 1. `systemd/`: Directory containing sample systemd unit files you can customize to run the script periodically.
 1. `cfn/host-bucket.yaml`: CloudFormation template to set up an S3 bucket and IAM permissions for a new host.
 1. `cfn/backup-monitor`: CloudFormation (SAM) template and Lambda function to notify you if backups stop working.
+1. `terraform-gcp`: Terraform template to set up remote backups in Google Cloud Storage. (Sets up GCS folder and Service Account.)
 
 You can use the script without systemd or CloudFormation if you prefer. They all work independently.
 
-## Configuring new hosts
+## Configuring New Hosts
 
-Here are the steps I generally follow to set up backups on a new host. I use separate keys, buckets, and AWS credentials so the compromise of any host doesn't affect others.
+Here are the steps I generally follow to set up backups on a new host.
 
-### Set up an S3 bucket
+### AWS Setup
+
+I use separate keys, buckets, and AWS credentials so the compromise of any host doesn't affect others.
+
+#### Set Up An S3 Bucket
 
 First, create an S3 bucket and IAM user/group/policy with read-write access to it. The included `cfn/host-bucket.yaml` CloudFormation template can do this for you automatically. To apply it:
 
@@ -58,7 +63,47 @@ Alternatively, you can create the S3 bucket and IAM resources manually. Here are
 1. Create IAM group with the same name as the policy and assign the policy to it.
 1. Create IAM user for programmatic access. Add the user to the group. Don't forget to copy the access key ID and secret access key at the end of the wizard.
 
-### Set up the host
+#### Configure AWS Credentials On The Host
+
+1. Create a file on the host containing the AWS credentials.
+    ```
+    [Credentials]
+    aws_access_key_id = <access_key_id>
+    aws_secret_access_key = <secret_key>
+    ```
+    Replace `<access_key_id>` and `<secret_key>` with the IAM user credentials. Put it in a location appropriate for the backup user such as `/etc/duplicity-unattended/aws_credentials` or `~/.duplicity-unattended/aws_credentials`.
+1. Make sure only the backup user can access the credentials file.
+    ```
+    chmod 600 aws_credentials
+    ```
+    Change ownership if needed.
+
+### GCP Setup
+
+Much of this is based on https://systemoverlord.com/2019/09/23/backing-up-to-google-cloud-storage-with-duplicity-and-service-accounts.html
+
+#### Set Up GCP Account
+1. Create a Google Cloud account at [cloud.google.com](https://cloud.google.com)
+1. Log into the [web console](https://console.cloud.google.com)
+1. Create a project that will house your backups, and make yourself a "Storage Admin" on that project.
+
+#### Use Terraform To Set Up Cloud Storage And Service Account
+The terraform included in this repository will create everything you need in your GCP project, including the cloud storage bucket, and all the required permissions for your host machine.
+
+You should modify the contents of `terraform.tfvars` to match your needs before running the following:
+
+```
+cd ./terraform
+terraform init
+terraform apply
+```
+
+This will output a message from terraform about success/failure, and the path to your service account credentials file. You'll need this path to finish your host setup later on.
+
+
+### Set Up The Host
+
+#### Basic Setup
 
 1. Install dependencies:
    * Duplicity
@@ -77,18 +122,26 @@ Alternatively, you can create the S3 bucket and IAM resources manually. Here are
     gpg --armor --output privkey.gpg --export-secret-key <key_id>
     ```
 1. Delete the exported key files from the filesystem once they're secure.
-1. Create a file on the host containing the AWS credentials.
-    ```
-    [Credentials]
-    aws_access_key_id = <access_key_id>
-    aws_secret_access_key = <secret_key>
-    ```
-    Replace `<access_key_id>` and `<secret_key>` with the IAM user credentials. Put it in a location appropriate for the backup user such as `/etc/duplicity-unattended/aws_credentials` or `~/.duplicity-unattended/aws_credentials`.
-1. Make sure only the backup user can access the credentials file.
-    ```
-    chmod 600 aws_credentials
-    ```
-    Change ownership if needed.
+
+#### GCP-Specific Host Setup Steps
+1. Install [gcs-oauth2-boto-plugin](https://github.com/GoogleCloudPlatform/gcs-oauth2-boto-plugin)
+1. Install the gcloud sdk ([instructions](https://cloud.google.com/sdk/docs/install))
+1. Run `gcloud init`
+1. You will be prompted to log in to your Google Cloud account, which authenticates your machine so that we can run the Terraform
+1. Run `gsutil config -e` (Enter the path to your service account credentials file when prompted)
+1. The gsutil command given above will create a boto config file at `~/.boto`
+1. Create the file `~/.config/boto/plugins/gcs.py`
+1. Put the following contents in that file: `import gcs_oauth2_boto_plugin`
+1. Put the following at the bottom of your `~/.boto` file
+
+```
+[Plugin]
+plugin_directory = /home/{YOUR_USERNAME}/.config/boto/plugins
+```
+
+
+#### Add To Path And Test
+
 1. Copy the `duplicity-unattended` script to a `bin` directory and make sure it's runnable.
     ```
     chmod +x duplicity-unattended
@@ -106,7 +159,7 @@ Alternatively, you can create the S3 bucket and IAM resources manually. Here are
     duplicity-unattended --config <config_file>
     ```
 
-## Schedule backups
+## Schedule Backups
 
 How you schedule backups depends on your OS. I use systemd timers for this. See the `systemd` directory in this repository for sample unit files you can customize. You'll probably need to change `User`, `Group`, and `ExecStart` to match the user who performs the backups and the location of the `duplicity-unattended` script, respectively.
 
@@ -132,7 +185,7 @@ sudo journalctl -u duplicity-unattended.service
 
 You're done! Enjoy your backups.
 
-## Set up monitoring
+## Set Up Monitoring (AWS Only)
 
 How do make sure backups keep working  in the future? You can set up systemd to email you if something goes wrong, but I prefer an independent mechanism. The `cfn/backup-monitor` directory contains a CloudFormation template (SAM template, actually) with a Lambda function that monitors a bucket for new backups and emails you if no recent backups have occurred. To set it up for a new host/bucket, follow these steps:
 
@@ -174,7 +227,7 @@ If you prefer to deploy the CloudFormation template directly from source code in
    where `<code_bucket>` is an S3 bucket to which the AWS CLI user has write access.
 1. You can now use the CloudFormation AWS console or the AWS CLI to deploy the `packaged.yaml` stack template that SAM just created.
 
-## Restoring from backup
+## Restoring From Backup
 
 Invoke `duplicity` directly to restore from a backup. The general procedure is as follows:
 

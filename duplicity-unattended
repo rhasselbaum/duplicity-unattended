@@ -16,12 +16,13 @@ import argparse
 import sys
 
 # Config file keys
-REMOVE_ALL_BUT_N_FULL_KEY = 'remove_all_but_n_full'
-S3_URL_KEY = 's3_url'
-BACKUP_DIRS_KEY = 'backup_dirs'
+CLOUD_KEY = 'cloud'
 GPG_KEY_ID_KEY = 'gpg_key_id'
-AWS_CONFIG_FILE_KEY = 'aws_config_file'
+BUCKET_URL_KEY = 'bucket_url'
 FULL_IF_OLDER_THAN_KEY = 'full_if_older_than'
+REMOVE_ALL_BUT_N_FULL_KEY = 'remove_all_but_n_full'
+AWS_CONFIG_FILE_KEY = 'aws_config_file'
+BACKUP_DIRS_KEY = 'backup_dirs'
 
 # Backup directory config keys
 SOURCE_KEY = 'source'
@@ -43,19 +44,29 @@ def main():
 
     # Set up environment.
     env = {'PASSPHRASE': ''}  # For unattended backups, there's no point to a passphrase. Just protect the key.
-    # Point boto to a config file if one was given. Otherwise, rely on its default credentials resolution behavior.
-    if AWS_CONFIG_FILE_KEY in config:
-        env.update({'BOTO_CONFIG': config[AWS_CONFIG_FILE_KEY]})
 
-    # Base backup command used for each source directory.
-    backup_base_cmd = [
-        'duplicity',
-        '--full-if-older-than', config[FULL_IF_OLDER_THAN_KEY],
-        '--encrypt-sign-key', config[GPG_KEY_ID_KEY],
-        '--s3-use-new-style',
-        '--s3-use-ia',
-        '--s3-use-multiprocessing',
-    ]
+    if config[CLOUD_KEY] == "aws":
+        # Point boto to a config file if one was given. Otherwise, rely on its default credentials resolution behavior.
+        if AWS_CONFIG_FILE_KEY in config:
+            env.update({'BOTO_CONFIG': config[AWS_CONFIG_FILE_KEY]})
+        # Base backup command used for each source directory.
+        backup_base_cmd = [
+            'duplicity',
+            '--full-if-older-than', config[FULL_IF_OLDER_THAN_KEY],
+            '--encrypt-sign-key', config[GPG_KEY_ID_KEY],
+            '--s3-use-new-style',
+            '--s3-use-ia',
+            '--s3-use-multiprocessing',
+        ]
+    elif config[CLOUD_KEY] == "gcp":
+        backup_base_cmd = [
+            'duplicity',
+            '--full-if-older-than', config[FULL_IF_OLDER_THAN_KEY],
+            '--encrypt-sign-key', config[GPG_KEY_ID_KEY],
+        ]
+    else:
+        sys.exit(f"{config[CLOUD]} is not a supported cloud provider.")
+
     if args.dry_run:
         backup_base_cmd.append('--dry-run')
 
@@ -64,7 +75,7 @@ def main():
         backup_cmd = backup_base_cmd  \
                      + list(chain.from_iterable([['--include', p] for p in backup_dir.get(INCLUDES_KEY, [])])) \
                      + list(chain.from_iterable([['--exclude', p] for p in backup_dir.get(EXCLUDES_KEY, [])])) \
-                     + [backup_dir[SOURCE_KEY], config[S3_URL_KEY] + backup_dir[SOURCE_KEY]]
+                     + [backup_dir[SOURCE_KEY], config[BUCKET_URL_KEY] + backup_dir[SOURCE_KEY]]
         print('Starting backup: {}'.format([backup_dir[SOURCE_KEY]]), flush=True)
         run(backup_cmd, check=True, env=env)
 
@@ -79,7 +90,7 @@ def main():
 
         # Purge each backed up source directory.
         for backup_dir in config[BACKUP_DIRS_KEY]:
-            purge_cmd = purge_base_cmd + [config[S3_URL_KEY] + backup_dir[SOURCE_KEY]]
+            purge_cmd = purge_base_cmd + [config[BUCKET_URL_KEY] + backup_dir[SOURCE_KEY]]
             print('Starting purge: {}'.format([backup_dir[SOURCE_KEY]]), flush=True)
             run(purge_cmd, check=True, env=env)
 
@@ -96,10 +107,15 @@ def _validate_config(config):
                 raise ValueError(f'{repr(key)} is required in config')
 
         # Make sure global config has all required values.
+        fail_if_missing(CLOUD_KEY)
         fail_if_missing(GPG_KEY_ID_KEY)
         fail_if_missing(FULL_IF_OLDER_THAN_KEY)
-        fail_if_missing(S3_URL_KEY)
+        fail_if_missing(BUCKET_URL_KEY)
         fail_if_missing(BACKUP_DIRS_KEY)
+
+        if config[CLOUD_KEY] not in ['aws', 'gcp']:
+            raise ValueError(f'{repr(CLOUD_KEY)} must be either aws or gcp.')
+
         if not isinstance(config[BACKUP_DIRS_KEY], list):
             raise ValueError(f'{repr(BACKUP_DIRS_KEY)} must contain a list of source directories')
 

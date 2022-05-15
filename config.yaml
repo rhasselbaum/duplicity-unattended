@@ -2,11 +2,14 @@
 # Config options for Duplicity host backup.
 ########################################################################
 
+# Your preferred cloud here [aws, gcp]
+cloud: aws
+
 # GnuPG key ID used for encryption and signing.
 gpg_key_id: 0302EC6D2613E4936532366CB48526BB511A0E34
 
-# S3 bucket name and optional prefix in Duplicity URL format.
-s3_url: s3+http://my-host-backup
+# [s3, gs] bucket name and optional prefix in Duplicity URL format.
+bucket_url: s3+http://my-host-backup
 
 # Create full backup if the last one is older than the specified period. Use Duplicity time format.
 full_if_older_than: 1M
@@ -15,6 +18,7 @@ full_if_older_than: 1M
 remove_all_but_n_full: 3
 
 # Optional AWS config file with credentials.
+# Ignore if using GCP.
 aws_config_file: /etc/duplicity-unattended/aws_credentials
 
 # Directories to be backed up. Each one consists of a source (absolute path) and optional lists of
