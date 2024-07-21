@@ -107,7 +107,6 @@ This will output a message from terraform about success/failure, and the path to
 
 1. Install dependencies:
    * Duplicity
-   * boto2 for Python 2
    * GnuPG
    * Python 3
    * PyYAML for Python 3
