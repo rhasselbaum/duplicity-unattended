@@ -14,6 +14,7 @@ from subprocess import run
 from itertools import chain
 import argparse
 import sys
+import os
 
 # Config file keys
 CLOUD_KEY = 'cloud'
@@ -43,7 +44,10 @@ def main():
         sys.exit(f"Cannot parse {repr(args.config)} as YAML: {e}")
 
     # Set up environment.
-    env = {'PASSPHRASE': ''}  # For unattended backups, there's no point to a passphrase. Just protect the key.
+    env = {
+        'PASSPHRASE': '', # For unattended backups, there's no point to a passphrase. Just protect the key.
+        'PATH': os.environ.get('PATH', '') # Resolve "duplicity" executable from the PATH.
+    }
 
     if config[CLOUD_KEY] == "aws":
         # Point boto to a config file if one was given. Otherwise, rely on its default credentials resolution behavior.
@@ -54,9 +58,7 @@ def main():
             'duplicity',
             '--full-if-older-than', config[FULL_IF_OLDER_THAN_KEY],
             '--encrypt-sign-key', config[GPG_KEY_ID_KEY],
-            '--s3-use-new-style',
             '--s3-use-ia',
-            '--s3-use-multiprocessing',
         ]
     elif config[CLOUD_KEY] == "gcp":
         backup_base_cmd = [

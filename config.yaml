@@ -9,7 +9,7 @@ cloud: aws
 gpg_key_id: 0302EC6D2613E4936532366CB48526BB511A0E34
 
 # [s3, gs] bucket name and optional prefix in Duplicity URL format.
-bucket_url: s3+http://my-host-backup
+bucket_url: s3:///my-host-backup
 
 # Create full backup if the last one is older than the specified period. Use Duplicity time format.
 full_if_older_than: 1M
