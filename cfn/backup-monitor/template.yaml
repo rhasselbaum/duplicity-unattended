@@ -37,7 +37,7 @@ Parameters:
 Globals:
     Function:
         Timeout: 600
-        Runtime: python3.7
+        Runtime: python3.13
 Resources:
   Function:
     Type: AWS::Serverless::Function
