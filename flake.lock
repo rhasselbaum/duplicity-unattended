@@ -1,40 +1,19 @@
 {
   "nodes": {
-    "duplicity-unattended-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1721584227,
-        "narHash": "sha256-CMisnK9r6lFwlWIx+nyybNnvuHroI4irUob6khxXH8Y=",
-        "owner": "rhasselbaum",
-        "repo": "duplicity-unattended",
-        "rev": "d8cc59098c64d9effc84b7739f27cceb352943f1",
-        "type": "github"
-      },
-      "original": {
-        "owner": "rhasselbaum",
-        "repo": "duplicity-unattended",
-        "type": "github"
-      }
-    },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1722640603,
-        "narHash": "sha256-TcXjLVNd3VeH1qKPH335Tc4RbFDbZQX+d7rqnDUoRaY=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "81610abc161d4021b29199aa464d6a1a521e0cc9",
-        "type": "github"
+        "lastModified": 0,
+        "narHash": "sha256-fusHbZCyv126cyArUwwKrLdCkgVAIaa/fQJYFlCEqiU=",
+        "path": "/nix/store/isfbldda5j8j6x3nbv1zim0c0dpf90v8-source",
+        "type": "path"
       },
       "original": {
-        "owner": "NixOS",
-        "ref": "nixpkgs-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
+        "id": "nixpkgs",
+        "type": "indirect"
       }
     },
     "root": {
       "inputs": {
-        "duplicity-unattended-src": "duplicity-unattended-src",
         "nixpkgs": "nixpkgs",
         "utils": "utils"
       }

@@ -5,7 +5,7 @@
     utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, utils, duplicity-unattended-src, ... }:
+  outputs = { self, nixpkgs, utils, ... }:
     utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
@@ -16,7 +16,7 @@
             pname = "duplicity-unattended";
             version = "git";
 
-            src = duplicity-unattended-src;
+            src = ./.;
             buildInputs = [
               (pkgs.python3.withPackages (p: with p; [ boto3 pyyaml ]))
               pkgs.duplicity
